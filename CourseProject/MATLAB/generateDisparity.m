@@ -11,4 +11,5 @@ figure;
 imshow(disparityMap, disparityRange, 'InitialMagnification', 50);
 colormap('jet');
 colorbar;
-title('Disparity Map');
+title('Disparity Map Before Histogram Equalization');
+
