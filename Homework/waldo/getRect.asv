@@ -1,8 +1,0 @@
-function [ corners ] = getRect( center,height,width )
-%GETRECT Summary of this function goes here
-%   Detailed explanation goes here
-corners1 = zeros(1,4);
-corners2 = zeros(1,4);
-corners1 = [center - width
-end
-
