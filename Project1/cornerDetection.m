@@ -1,22 +1,37 @@
-close all
-clear all
-clc
+% close all
+% clear all
+% clc
+%
+% I = imread('cameraman.tif');
+function [rows,cols] = detectCorners(I)
 
-I = imread('cameraman.tif');
-I=histeq(I);
-I = double(I);
+%make sure image is greyscale
+if(numel(size(I)) >2)
+    I=rgb2gray(I);
+end
 
+I=histeq(I); %%histeq the image
+I = double(I); %change to double
+
+%-------First Derivatives---------------%
 G= fspecial('gaussian',6,1);
 [Gx,Gy] = gradient(G);
 Ix = conv2(I,Gx,'same'); Iy = conv2(I,Gy,'same');
 Ix2 = Ix.*Ix; Iy2 = Iy.*Iy; Ixy = Ix.*Iy;
-sigma=2;
+%---------------------------------------%
+
+%----Calculate second derivatives-------%
 Gw = fspecial('gaussian',36,1);
-Sx2 = conv2(Ix2,Gw,'same'); Sy2 = conv2(Iy2,Gw,'same'); Sxy = conv2(Ixy,Gw,'same');
+Sx2 = conv2(Ix2,Gw,'same'); Sy2 = conv2(Iy2,Gw,'same');
+Sxy = conv2(Ixy,Gw,'same');
+%---------------------------------------%
 H = cell(size(Ix2));
 R = zeros(size(Ix2));
-
 k=0.4;
+
+%----------Calculating the response-----%
+%Kept in cells and then calculated the response for clarity and
+%non-realtime requirements
 for i = 1:size(Sx2,1)
     for j = 1:size(Sx2,2)
         H{i,j} = [Sx2(i,j) Sxy(i,j);
@@ -24,14 +39,12 @@ for i = 1:size(Sx2,1)
         R(i,j) = det(H{i,j}) / k*(trace(H{i,j}));
     end
 end
+%---------------------------------------%
+
+J = abs(R(:)); %absolute of the image
 
 
-
-
-J = abs(R(:));
-
-
-t = 0.05*max(J);
+t = 0.05*max(J);%thresholding to get corners
 for i = 1:numel(J)
     if J(i)> t
         J(i) = 1;
@@ -43,6 +56,7 @@ end
 
 J2 = reshape(J,size(R));
 [cols,rows]=find(J2 == 1);
+%-----non-maximum suppression----------%
 for i = 1:numel(rows)-1
     for j = i+1:numel(cols)
         if(J2(cols(j),rows(j))==1 && J2(cols(i),rows(i))==1)
@@ -50,46 +64,12 @@ for i = 1:numel(rows)-1
             if(dist< 100 && R(cols(j),rows(j)) < R(cols(i),rows(i)))
                 J2(cols(j),rows(j))=0;
             elseif(dist < 100)
-                    J2(cols(i),rows(i))=0;
-                end
+                J2(cols(i),rows(i))=0;
             end
         end
+    end
 end
 
-% for i=rows
-%     for j = cols
-%         
-%     end
-% end
-[rows,cols]=find(J2 == 1);
-
-
-figure
-imshow(I,[]);
-hold on
-plot(cols,rows,'g*');
-I =imread('cameraman.tif');
-C = corner(I,'Harris');
-figure;
-imshow(I);
-hold on
-plot(C(:,1), C(:,2), 'r*');
-%
-% THRESH = -1.0e5;
-% R2=R;
-% for i = 1:size(R,1)
-%     for j = 1:size(R,2)
-%         if(R(i,j)<THRESH)
-%             R2(i,j)=1;
-%         else
-%             R2(i,j)=0;
-%         end
-%     end
-% end
-%
-% imshow(R2,[])
-% figure
-% imshow(imfuse(I,R2),[])
-% % [row,col] = find(R4 ==1);
-% % figure
-% % imshow(I,[]);hold on; plot(row,col,'r*');
+%---------------------------------------%
+[rows,cols]=find(J2 == 1);%return locations of corners
+end
