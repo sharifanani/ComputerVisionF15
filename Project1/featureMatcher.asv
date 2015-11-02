@@ -1,0 +1,15 @@
+close all
+clear all
+clc
+
+I=imread('cameraman.tif');
+
+load('FEATURES1.mat');
+FEATURES1=FEATURES;
+squares1=squares;
+load('FEATURES2.mat');
+FEATURES2=FEATURES;
+squares2 = squares;
+clear FEATURES;
+clear squares;
+for i = 1 : 

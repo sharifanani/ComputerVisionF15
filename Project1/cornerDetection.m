@@ -52,8 +52,6 @@ for i = 1:numel(J)
         J(i) = 0;
     end
 end
-
-
 J2 = reshape(J,size(R));
 [cols,rows]=find(J2 == 1);
 %-----non-maximum suppression----------%
