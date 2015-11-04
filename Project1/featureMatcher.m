@@ -1,9 +1,10 @@
 close all
 clear all
 clc
-
-I=imread('coins.png');
-I2 = imrotate(I,45,'crop');
+I_orig=(imread('Yosemite1.jpg'));
+I=rgb2gray(imread('Yosemite1.jpg'));
+I2_orig = (imread('Yosemite2.jpg'));
+I2 = rgb2gray(imread('Yosemite2.jpg'));
 load('FEATURES1.mat');
 FEATURES1=FEATURES;
 squares1=squares;
@@ -28,32 +29,27 @@ for i = 1:size(SADS,1)
    MATCH(2,i) = ind;
    MATCH(3,i) = i;
 end
-% remove duplicates
-[d1,d2] = sort(MATCH(2,:));
+% sorting by SAD
+[d1,d2] = sort(MATCH(1,:));
 MATCH = MATCH(:,d2);
 ind=[];
-% MATCH(1,:)=MATCH(1,:)/max(MATCH(1,:));
+% removing nonprobable matches
+mean(MATCH(1,:)) - 1*std(MATCH(1,:))
 for i = 1:size(MATCH,2)
-    if(MATCH(1,i)>MATCH(1,:)-3*std(MATCH(1,:)))
+    if(MATCH(1,i)> mean(MATCH(1,:)) - 1.5*std(MATCH(1,:)))
         ind=[ind,i];
     end
 end
 MATCH(:,ind)=[];
-I3 = [I,I2];
+
+%removing duplicates
+[C,ia,ic]=unique(MATCH(2,:));
+MATCH2 = MATCH(:,ia);
+
+I3 = [I_orig,I2_orig];
 figure;
 imshow(I3,[]);hold on;
-for i=1:size(MATCH,2)
-   plot([FEATURES1{1,MATCH(3,i)}(2) , FEATURES2{1,MATCH(2,i)}(2)+size(I,1)],...
-       [FEATURES1{1,MATCH(3,i)}(1), FEATURES2{1,MATCH(2,i)}(1)])
+for i=1:size(MATCH2,2)
+   plot([FEATURES1{1,MATCH2(3,i)}(2) , FEATURES2{1,MATCH2(2,i)}(2)+size(I,2)],...
+       [FEATURES1{1,MATCH2(3,i)}(1), FEATURES2{1,MATCH2(2,i)}(1)])
 end
-% 
-% % figure;imshow(I,[]);hold on;plot(squares1{43}(1,:),squares1{43}(2,:))
-% % figure;imshow(imrotate(I,45,'crop'),[]);hold on;plot(squares2{ind}(1,:),squares2{ind}(2,:))
-% % figure;imshow(imresize(FEATURES1{3,10},5),[])
-% % %-------debug code------%
-% % figure;
-% % for i = 1:size(FEATURES2,2)
-% %     imshow(imresize(FEATURES2{3,i},5),[])
-% %     i
-% %     pause()
-% % end

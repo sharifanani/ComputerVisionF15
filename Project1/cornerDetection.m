@@ -1,17 +1,12 @@
-% close all
-% clear all
-% clc
-%
-% I = imread('cameraman.tif');
 function [rows,cols] = detectCorners(I)
 
 %make sure image is greyscale
 if(numel(size(I)) >2)
-    I=rgb2gray(I);
+    I=double(rgb2gray(I));
 end
 
-I=histeq(I); %%histeq the image
-I = double(I); %change to double
+% I=histeq(I); %%histeq the image
+% I = double(I); %change to double
 
 %-------First Derivatives---------------%
 G= fspecial('gaussian',6,1);
@@ -27,7 +22,7 @@ Sxy = conv2(Ixy,Gw,'same');
 %---------------------------------------%
 H = cell(size(Ix2));
 R = zeros(size(Ix2));
-k=0.4;
+k=0.04;
 
 %----------Calculating the response-----%
 %Kept in cells and then calculated the response for clarity and
@@ -36,7 +31,7 @@ for i = 1:size(Sx2,1)
     for j = 1:size(Sx2,2)
         H{i,j} = [Sx2(i,j) Sxy(i,j);
             Sxy(i,j) Sy2(i,j)];
-        R(i,j) = det(H{i,j}) / k*(trace(H{i,j}));
+        R(i,j) = det(H{i,j}) - k*(trace(H{i,j}))^2;
     end
 end
 %---------------------------------------%
@@ -44,7 +39,7 @@ end
 J = abs(R(:)); %absolute of the image
 
 
-t = 0.03*max(J);%thresholding to get corners
+t = 0.02*max(J);%thresholding to get corners
 for i = 1:numel(J)
     if J(i)> t
         J(i) = 1;
