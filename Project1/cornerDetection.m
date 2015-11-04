@@ -44,7 +44,7 @@ end
 J = abs(R(:)); %absolute of the image
 
 
-t = 0.05*max(J);%thresholding to get corners
+t = 0.03*max(J);%thresholding to get corners
 for i = 1:numel(J)
     if J(i)> t
         J(i) = 1;

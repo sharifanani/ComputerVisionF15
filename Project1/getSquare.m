@@ -15,9 +15,9 @@ function [SQF] = getSquare(scale,theta,x_tran,y_tran)
 %% Definig the square for plotting
 hom = 1/scale;
 SQ2 = scale*[0,0,0.5,0.5,-0.5,-0.5,0;0,0.5,0.5,-0.5,-0.5,0.5,0.5;hom*ones(1,7)];
-
+theta=theta+pi/2; %adjusting for image
 %% Defining the homography
-rotm = [cos(theta),sin(theta);-sin(theta),cos(theta)];%angle2dcm(0,0,pi/2,'XYZ');
+rotm = [cos(theta),-sin(theta);sin(theta),cos(theta)];%angle2dcm(0,0,pi/2,'XYZ');
 transm = [x_tran;y_tran]; %translate
 homog = [rotm,transm];
 homog = [homog;[0 0 1]];
