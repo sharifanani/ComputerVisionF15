@@ -27,8 +27,7 @@ k=0.04;
 %----------Calculating the response-----%
 for i = 1:size(Sx2,1)
     for j = 1:size(Sx2,2)
-%         H{i,j} = [Sx2(i,j) Sxy(i,j); %cell previously used for better
-%         readability
+%         H{i,j} = [Sx2(i,j) Sxy(i,j); //c
 %             Sxy(i,j) Sy2(i,j)];
         R(i,j) = (Sx2(i,j)*Sy2(i,j) - Sxy(i,j)*Sxy(i,j)) - k*(Sx2(i,j)+Sy2(i,j))^2;
     end
@@ -38,7 +37,7 @@ end
 J = abs(R(:)); %absolute of the image
 
 
-t = 0.02*max(J);%thresholding to get corners, could be tuned a lot better
+t = 0.02*max(J);%thresholding to get corners
 for i = 1:numel(J)
     if J(i)> t
         J(i) = 1;

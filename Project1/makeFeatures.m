@@ -2,7 +2,7 @@ close all
 clear all
 clc
 
-I = imread('Yosemite2.jpg');
+I = imresize(imread('wall/img3.ppm'),0.5);
 I_original = I;
 if(numel(size(I)) >2)
     I=(rgb2gray(I));
