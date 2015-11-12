@@ -1,9 +1,9 @@
 close all
 clear all
 clc
-I_orig=imresize(imread('wall/img1.ppm'),0.5);
+I_orig=imresize(imread('bikes/img1.ppm'),0.5);
 I=rgb2gray(I_orig);
-I2_orig = imresize(imread('wall/img2.ppm'),0.5);
+I2_orig = imresize(imread('bikes/img2.ppm'),0.5);
 I2 = rgb2gray(I2_orig);
 load('FEATURES1.mat');
 FEATURES1=FEATURES;
