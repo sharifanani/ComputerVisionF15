@@ -1,0 +1,175 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage{iccv}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\graphicspath{{/home/sharif/Documents/ComputerVisionF15/Project 2/Result_Images}}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Include other packages here, before hyperref.
+
+% If you comment hyperref and then uncomment it, you should delete
+% egpaper.aux before re-running latex.  (Or just hit 'q' on the first latex
+% run, let it finish, and you should be clear).
+\usepackage[breaklinks=true,bookmarks=false]{hyperref}
+
+\iccvfinalcopy % *** Uncomment this line for the final submission
+
+\def\iccvPaperID{****} % *** Enter the ICCV Paper ID here
+\def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
+
+% Pages are numbered in submission mode, and unnumbered in camera-ready
+%\ificcvfinal\pagestyle{empty}\fi
+\setcounter{page}{1}
+\begin{document}
+
+%%%%%%%%% TITLE
+\title{Image Stitching and Mosaicking}
+
+\author{Sharif Anani\\
+South Dakota School\\
+of Mines \& Technology\\
+501 E. St. Joseph St.\\
+{\tt\small Sharif.Anani@mines.sdsmt.edu}
+% For a paper whose authors are all at the same institution,
+% omit the following lines up until the closing ``}''.
+% Additional authors and addresses can be added with ``\and'',
+% just like the second author.
+% To save space, use either the email address or home page, not both
+}
+
+\maketitle
+%\thispagestyle{empty}
+
+
+%%%%%%%%% ABSTRACT
+\begin{abstract}
+   In this project, we are to use what we have been taught in the class to create and utilize homographies. Homographies are matrices that are used to describe a 2D transform between two images. One use of homographies is image stitching. Panorama images became very popular after mobile phones became capable of stitching images together to create a wider field of view imitating that of the normal human eye. In this project, we go through the steps of computing the homography and applying it to create a new image that results in a panoramic view.
+\end{abstract}
+
+%%%%%%%%% BODY TEXT
+\section{Introduction}
+Image stitching and mosaicking has been achieved for a while now, and it cam be found on today's moderate smartphone. In this project, we attempt to create a mosaic from two images that are taken from the same scene. The result should be an image with a wider field of view covering the total FOV from both images.\\
+This serves as one of the most basic motivations for developing image mosaicking algorithms. Image mosaicking algorithms are also used in a multitude of other things 
+\section{Basic Approach}
+Image transforms can be computed with a minimum of one point. The number of points can, however, restrict the type of transforms possible.\\
+For example, to translate an image, one can use one point. The coordinate information $[x,y]$ is sufficient to calculate a transformation matrix $H^{3,3}$ that when multiplied by a point, results in the coordinates transferring from $(x,y,1) \to (x^{'}, y^{'},1)$.
+For an affine transform transformation, we need a minimum of four points.\\
+As with any transformation, to solve for the transformation we can solve the equation:\\
+\begin{equation}
+\alpha P = HP^{'}
+\end{equation}
+Where:
+\begin{enumerate}
+\item{$\alpha$} is a scale factor
+\item{P} is the point
+\item{H} is the transformation matrix
+\item{$P^{'}$} is the projection of the point
+\end{enumerate}
+Since the vectors $P \& P^{'}$ are homogeneous, then they are guaranteed to have the same direction, but can have different lengths. This means that we can have another equation:
+\begin{equation}
+P \times HP^{'} = 0
+\label{eq:trans_cross}
+\end{equation}
+
+To be able to solve for the transformation matrix $H$, we can use equation \ref{eq:trans_cross} and rewrite it in a way that allows us to solve it.\\
+If each row in $H$ is denoted as $h^{j}$, then $HP$ can be written as:\\
+\begin{center}
+$
+HP =
+\begin{bmatrix}
+h^{1}P\\
+h^{2}P\\
+h^{3}P
+\end{bmatrix}
+$
+\end{center}
+And if $P^{'} = [x^{'}, y^{'}, w]^{T}$ then for each correspondence:
+\begin{equation}
+P' \times HP = [y^{'}h^{3} - w^{'}h^{2}P
+\end{equation}
+which can be rearranged into the equation:
+\begin{equation}
+\begin{bmatrix}
+0^{1\times 3} & -w_{i}^{'}P_{i}^{T} & y_{i}^{'}P_{i}^{T}\\
+-w_{i}^{'}P_{i}^{T} & 0^{1 \times 3} & -x_{i}^{'}P_{i}^{T}
+\end{bmatrix}
+\begin{bmatrix}
+(h^{1})^{T}\\
+(h^{2})^{T}\\
+(h^{3})^{T}
+\end{bmatrix}
+=0
+\end{equation}
+If we to this for four points, we have an equation in the form of $Ah=0$ where $h$ is $9 \times 1$ and $A$ is $9\times 8$. We can obtain the solution by finding the nontrivial solution to the null space of $A$. We know the solution will be of size $9\times 1$, because $rank(A)$ is at most 8.\\
+The solution $h$ will contain the entries of the transformation matrix $H$, which we can obtain from reshaping $h$.
+\subsection{Obtaining the best homography}
+Obtaining the homography can be done in two ways.
+\begin{itemize}
+\item Using human interference
+\item Automated using features
+\end{itemize}
+The first method uses \texttt{Matlab}'s \texttt{ginput} function to obtain four point coordinates $[x,y]$ and their matching points $[x',y']$\\
+For the second method, we can use \texttt{Matlab}'s \texttt{detectSURFFeatures} and match the points. We can also use the scripts developed in the previous project.\\
+\subsubsection{Using More Than Four Correspondences Using RANSAC}
+To use more than four correspondences to find the best homography, we can generate a random number of homographies (i.e. 500 homographies), each generated from a four random correspondences of the generated correspondences. We can then use each homography to inverse-warp all the other matching features. An ideal homography should land each feature at its correspondent feature, but this is not the case in practice.\\
+We can take the squared distances between the inverse-warped features and their correspondences and then count the inliers within a tolerance, and pick the homography that results with the most inliers.\\
+This process is known as Random Sampling and Consensus (RANSAC). In the code folder, this is implemented in \texttt{homogRANSAC.m}. One feature noticed about RANSAC - at least in this implementation - is that depending on the homographies and number of matches found, it does not always yield the same homography as the best one. this can be mended with a ratio-test-analogue type of test where the algorithm will guarantee the returned homography is at least however many folds better than the next one.
+\section{Mosaicking}
+After inverse warping one of the images into the frame of the other, we are left with another problem, how do we actually create a mosaic of both images?
+The two images need to be aligned in a manner such that one completes the other, and to do that, we need to calculate an offset that will translate the first image into the newly created canvas containing the warped image.\\
+To calculate the offset, we can use the inverse warped corners that were transferred from the second image into the first. The offset in both the width and height coordinates will be the minimum between the warped corners and zero, whichever the smallest without being a negative number. Subtracting this offset and using those coordinates on the newly created canvas to position the first image will place it where it needs to be in order for the two images to be properly mosaicked, leaving only the parts of the warped image that do not exits on the second visible.
+\section{Example Results}
+The following results show some of the obtain results. Figure \ref{fig:quad} shows the SDSM\&T quad looking out of campus, the artefacts are visible because of the difference in lighting, which can be noticed because the sun hits one of the images very differently than the other.
+\begin{center}
+\begin{figure}[!!!!h]
+\includegraphics[width=0.5\textwidth]{Quad_Result.png}
+\caption{Mosaic of two images from the SDSM\&T Quad}
+\label{fig:quad}
+\end{figure}
+\end{center}
+Figure \ref{fig:lake} shows the mosaic from two images of lake sylvan. The artefacts are much less visible because of more forgiving lighting.
+\begin{figure}[h!]
+\includegraphics[width = 0.5\textwidth]{sylvan_result.png}
+\caption{Mosaic of two images from the Sylvan Lake}
+\label{fig:lake}
+\end{figure}
+\newpage
+Another result showcasing the manual operation of the user choosing the points for warping is shown in Figure \ref{fig:conrad}. This can be useful for applications in TV broadcasts where graphics can be overlaid over the video. Homographies of this kind can also be usefulfor visual odometry with the knowledge of other parameters such as the camera parameters and distance from object, then distances can be measured on the image.
+\begin{center}
+\begin{figure}[!!!!h]
+\includegraphics[width=0.5\textwidth]{framing_result.jpg}
+\caption{ECE students framed on the lab whiteboard}
+\label{fig:conrad}
+\end{figure}
+\end{center}
+The final result is one taken at the Colorado State University (CSU) campus. The result from this sequence falls in between the two, as alignment is fairly good, but again, color adjustments are needed to hide the edge where the two images meet. The result is shown in \ref{fig:CSU}
+\begin{center}
+\begin{figure}[!!!!h]
+\includegraphics[width=0.5\textwidth]{CSU_Result.png}
+\caption{Mosaic at CSU}
+\label{fig:CSU}
+\end{figure}
+\end{center}
+A collection of all the result images is available on the gitHub page of the project, which is reachable through \url{insert_url_here}
+\section{Further Improvement}
+There are many areas that this mosaicking method can be improved in; from image blending to having consistently better matches. One are of application for this is to take it to mosaicking depth (or disparity) maps, which takes the applications to another spectrum of the computer vision industry.
+\section{Conclusion}
+All in all, this project was a great way to apply what was learned in the classroom, and a good method to develop better intuition in computer vision problems. More importantly, it is the first building block for a bigger project that includes mosaicking disparity maps to create a wide view disparity to be used in automotive applications.
+%-------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%\section{Final copy}
+%
+%You must include your signed IEEE copyright release form when you submit
+%your finished paper. We MUST have this form before your paper can be
+%published in the proceedings.
+
+
+{\small
+\bibliographystyle{ieee}
+\bibliography{egbib}
+}
+
+\end{document}
