@@ -7,7 +7,26 @@
 \graphicspath{{/home/sharif/Documents/ComputerVisionF15/Project 2/Result_Images}}
 \usepackage{amsmath}
 \usepackage{amssymb}
-
+\usepackage{listings}
+\usepackage{color} %red, green, blue, yellow, cyan, magenta, black, white
+\definecolor{mygreen}{RGB}{28,172,0} % color values Red, Green, Blue
+\definecolor{mylilas}{RGB}{170,55,241}
+\lstset{language=Matlab,%
+    basicstyle=\ttfamily,
+    breaklines=true,%
+    morekeywords={matlab2tikz},
+    keywordstyle=\color{blue},%
+    morekeywords=[2]{1}, keywordstyle=[2]{\color{black}},
+    identifierstyle=\color{black},%
+    stringstyle=\color{mylilas},
+    commentstyle=\color{mygreen},%
+    showstringspaces=false,%without this there will be a symbol in the places where there is a space
+    numbers=left,%
+    numberstyle={\tiny \color{black}},% size of the numbers
+    numbersep=9pt, % this defines how far the numbers are from the text
+    emph=[1]{for,end,break},emphstyle=[1]\color{red}, %some words to emphasise
+    %emph=[2]{word1,word2}, emphstyle=[2]{style},    
+}
 % Include other packages here, before hyperref.
 
 % If you comment hyperref and then uncomment it, you should delete
@@ -116,11 +135,77 @@ For the second method, we can use \texttt{Matlab}'s \texttt{detectSURFFeatures} 
 \subsubsection{Using More Than Four Correspondences Using RANSAC}
 To use more than four correspondences to find the best homography, we can generate a random number of homographies (i.e. 500 homographies), each generated from a four random correspondences of the generated correspondences. We can then use each homography to inverse-warp all the other matching features. An ideal homography should land each feature at its correspondent feature, but this is not the case in practice.\\
 We can take the squared distances between the inverse-warped features and their correspondences and then count the inliers within a tolerance, and pick the homography that results with the most inliers.\\
-This process is known as Random Sampling and Consensus (RANSAC). In the code folder, this is implemented in \texttt{homogRANSAC.m}. One feature noticed about RANSAC - at least in this implementation - is that depending on the homographies and number of matches found, it does not always yield the same homography as the best one. this can be mended with a ratio-test-analogue type of test where the algorithm will guarantee the returned homography is at least however many folds better than the next one.
+This process is known as Random Sampling and Consensus (RANSAC). In the code folder, this is implemented in \texttt{homogRANSAC.m}. One feature noticed about RANSAC - at least in this implementation - is that depending on the homographies and number of matches found, it does not always yield the same homography as the best one. this can be mended with a ratio-test-analogue type of test where the algorithm will guarantee the returned homography is at least however many folds better than the next one. The following code illustrates how the best homography is returned in this project.
+\begin{lstlisting}
+function [Hres] = homogRANSAC(locs1,locs2, numIter)
+A = zeros(8,9);
+H = cell(1,numIter);
+Hinv = H;
+for j = 1:numIter
+    i=1;
+    k=1;
+    c = floor(rand(1,4)*length(locs1))+1;
+    while(i<=7)
+        x1 = locs1(c(k),1);y1=locs1(c(k),2);X1=locs2(c(k),1);Y1=locs2(c(k),2);
+        A(i,:) = [x1,y1,1,0,0,0,-x1*X1,-y1*X1,-X1];
+        A(i+1,:) = [0,0,0,x1,y1,1,-x1*Y1,-y1*Y1,-Y1];
+        k=k+1;
+        i=i+2;
+    end
+    N = null(A);
+    h = [N(1),N(2),N(3);
+        N(4),N(5),N(6);
+        N(7),N(8),N(9)];
+    h=h/h(end,end);
+    H{1,j} = h;
+    hi = inv(h);
+    hi = hi/hi(end,end);
+    Hinv{1,j} = hi;
+    
+end
+jMat = cell(2,size(Hinv,2));
+for j = 1:size(jMat,2)
+    jMat(1,j)=Hinv(j);
+    X = locs2(:,1); Y = locs2(:,2);
+    P = [X';Y';ones(1,length(locs2))];
+    Pp = Hinv{j}*P;
+    for i = 1:size(Pp,2)
+        v=Pp(:,i);
+        s=v(3);
+        Pp(:,i)=v/s;
+    end
+    
+    Xp = Pp(1,:)'; Yp = Pp(2,:)';
+    locs2p = [Xp, Yp];
+    diffxy = locs1-locs2p;
+    diff = (diffxy(:,1).^2 + diffxy(:,2).^2);
+    a=find(diff<1);
+    a=numel(a);
+    jMat{2,j} = a;
+    
+end
+a = jMat(2,:);
+a=cell2mat(a);
+[val,ind]=max(a);
+Hres = cell2mat(H(ind));
+end
+\end{lstlisting}
 \section{Mosaicking}
 After inverse warping one of the images into the frame of the other, we are left with another problem, how do we actually create a mosaic of both images?
 The two images need to be aligned in a manner such that one completes the other, and to do that, we need to calculate an offset that will translate the first image into the newly created canvas containing the warped image.\\
-To calculate the offset, we can use the inverse warped corners that were transferred from the second image into the first. The offset in both the width and height coordinates will be the minimum between the warped corners and zero, whichever the smallest without being a negative number. Subtracting this offset and using those coordinates on the newly created canvas to position the first image will place it where it needs to be in order for the two images to be properly mosaicked, leaving only the parts of the warped image that do not exits on the second visible.
+To calculate the offset, we can use the inverse warped corners that were transferred from the second image into the first. The offset in both the width and height coordinates will be the minimum between the warped corners and zero, whichever the smallest without being a negative number. Subtracting this offset and using those coordinates on the newly created canvas to position the first image will place it where it needs to be in order for the two images to be properly mosaicked, leaving only the parts of the warped image that do not exist on the second visible.\\
+\subsection{Summary of algorithm}
+The algorithm can be summarized in the following steps:
+\begin{enumerate}
+\item Find matches on both images
+\item Find the best homography using RANSAC
+\item Inverse warp the the corners of the second image into the first
+\item From the inverse warped corners, calculate the size of the new image to hold both images
+\item Create a meshgrid of that size
+\item Interpolate the second image into the newly created image
+\item Calculate the offset of the first non-warped image
+\item Copy the non-warped image into the frame
+\end{enumerate}
 \section{Example Results}
 The following results show some of the obtain results. Figure \ref{fig:quad} shows the SDSM\&T quad looking out of campus, the artefacts are visible because of the difference in lighting, which can be noticed because the sun hits one of the images very differently than the other.
 \begin{center}
@@ -153,11 +238,14 @@ The final result is one taken at the Colorado State University (CSU) campus. The
 \label{fig:CSU}
 \end{figure}
 \end{center}
-A collection of all the result images is available on the gitHub page of the project, which is reachable through \url{insert_url_here}
+A collection of all the result images is available on the gitHub page of the project, which is reachable through \url{https://github.com/sharifanani/ComputerVisionF15/blob/master/Project%202/Paper/Results.tar.bz2}
 \section{Further Improvement}
 There are many areas that this mosaicking method can be improved in; from image blending to having consistently better matches. One are of application for this is to take it to mosaicking depth (or disparity) maps, which takes the applications to another spectrum of the computer vision industry.
 \section{Conclusion}
-All in all, this project was a great way to apply what was learned in the classroom, and a good method to develop better intuition in computer vision problems. More importantly, it is the first building block for a bigger project that includes mosaicking disparity maps to create a wide view disparity to be used in automotive applications.
+All in all, this project was a great way to apply what was learned in the classroom, and a good method to develop better intuition in computer vision problems. More importantly, it is the first building block for a bigger project that includes mosaicking disparity maps to create a wide view disparity to be used in automotive 
+All code and images can be found on \url{https://github.com/sharifanani/ComputerVisionF15/tree/master/Project%202}
+\\
+All Information on how to achieve these results can be found in \cite{Szeliski}
 %-------------------------------------------------------------------------
 %------------------------------------------------------------------------
 %\section{Final copy}
@@ -165,8 +253,6 @@ All in all, this project was a great way to apply what was learned in the classr
 %You must include your signed IEEE copyright release form when you submit
 %your finished paper. We MUST have this form before your paper can be
 %published in the proceedings.
-
-
 {\small
 \bibliographystyle{ieee}
 \bibliography{egbib}

@@ -1,0 +1,3 @@
+ title = {The frobnicatable foo filter},
+ note = {Face and Gesture  submission ID 324. Supplied as additional material {\tt fg324.pdf}},
+ yea
