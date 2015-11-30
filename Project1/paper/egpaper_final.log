@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2015.11.5)  11 NOV 2015 23:36
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2015.11.5)  30 NOV 2015 12:49
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -479,19 +479,20 @@ Underfull \hbox (badness 10000) in paragraph at lines 139--142
 
  []
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 148.
-[2] [3
+[2]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 152.
+ [3
 
 ]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 148.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 152.
  (./egpaper_final.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 148.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 148.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 148.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 152.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 152.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 152.
  ) 
 Here is how much of TeX's memory you used:
- 8659 strings out of 493304
- 124299 string characters out of 6139871
+ 8660 strings out of 493304
+ 124308 string characters out of 6139871
  269636 words of memory out of 5000000
  11974 multiletter control sequences out of 15000+600000
  27083 words of font info for 65 fonts, out of 8000000 for 9000
@@ -506,10 +507,10 @@ ublic/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/cou
 rier/ucrr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb
 ></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/te
 xlive/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on egpaper_final.pdf (3 pages, 108511 bytes).
+Output written on egpaper_final.pdf (3 pages, 109433 bytes).
 PDF statistics:
- 90 PDF objects out of 1000 (max. 8388607)
- 75 compressed objects within 1 object stream
- 29 named destinations out of 1000 (max. 500000)
+ 91 PDF objects out of 1000 (max. 8388607)
+ 76 compressed objects within 1 object stream
+ 30 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
