@@ -1,0 +1,255 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage{iccv}
+\usepackage{float}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\graphicspath{{/home/sharif/Documents/ComputerVisionF15/Project 2/Result_Images}}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{color} %red, green, blue, yellow, cyan, magenta, black, white
+\definecolor{mygreen}{RGB}{28,172,0} % color values Red, Green, Blue
+\definecolor{mylilas}{RGB}{170,55,241}
+\lstset{language=Matlab,%
+    basicstyle=\ttfamily,
+    breaklines=true,%
+    morekeywords={matlab2tikz},
+    keywordstyle=\color{blue},%
+    morekeywords=[2]{1}, keywordstyle=[2]{\color{black}},
+    identifierstyle=\color{black},%
+    stringstyle=\color{mylilas},
+    commentstyle=\color{mygreen},%
+    showstringspaces=false,%without this there will be a symbol in the places where there is a space
+    numbers=left,%
+    numberstyle={\tiny \color{black}},% size of the numbers
+    numbersep=9pt, % this defines how far the numbers are from the text
+    emph=[1]{for,end,break},emphstyle=[1]\color{red}, %some words to emphasise
+    %emph=[2]{word1,word2}, emphstyle=[2]{style},    
+}
+% Include other packages here, before hyperref.
+
+% If you comment hyperref and then uncomment it, you should delete
+% egpaper.aux before re-running latex.  (Or just hit 'q' on the first latex
+% run, let it finish, and you should be clear).
+\usepackage[breaklinks=true,bookmarks=false]{hyperref}
+
+\iccvfinalcopy % *** Uncomment this line for the final submission
+
+\def\iccvPaperID{****} % *** Enter the ICCV Paper ID here
+\def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
+
+% Pages are numbered in submission mode, and unnumbered in camera-ready
+%\ificcvfinal\pagestyle{empty}\fi
+\setcounter{page}{1}
+\begin{document}
+
+%%%%%%%%% TITLE
+\title{Appearance-based Object Classification}
+
+\author{Sharif Anani\\
+South Dakota School\\
+of Mines \& Technology\\
+501 E. St. Joseph St.\\
+{\tt\small Sharif.Anani@mines.sdsmt.edu}
+% For a paper whose authors are all at the same institution,
+% omit the following lines up until the closing ``}''.
+% Additional authors and addresses can be added with ``\and'',
+% just like the second author.
+% To save space, use either the email address or home page, not both
+}
+
+\maketitle
+%\thispagestyle{empty}
+
+
+%%%%%%%%% ABSTRACT
+\begin{abstract}
+   In this project, we are to use eigenvalue decomposition to aid in the classification an object. The final goal is to be able to differentiate the object from other object, and to be able to calculate the orientation at which the object is, using a set of training and test images.
+\end{abstract}
+
+%%%%%%%%% BODY TEXT
+\section{Introduction}
+Object classification is one of the very popular areas of computer vision; it can be a very effective tool in production lines, autonomous vehicles, and artificial intelligence. To further deepen our understanding as students studying the topic, we are tasked with creating an appearance based object classification pipeline.\\
+The first step of the project is to use the provided training images to create manifolds for different objects. Each individual manifold will be used to approximate the orientation of an object in a test image. Another manifold will be created that encompasses all the known object, that manifold will be used to differentiate between objects and help classify an anonymous object as one those in the training image sets.\\
+Calculating the manifolds and subspaces will be done in two ways: once through Singular Value Decomposition (SVD), and once through the Fast Fourier Transform (FFT). The two approaches will be compared in different aspects.
+\section{Computing and Analyzing Eigenspaces}
+Two types of eigenspaces need to be computed. The eigenspaces need to be computed in a fashion that optimizes image representation and image distinction. Going through the optimization problem by minimizing the expected value of the error between the reconstructed image from the eigenspace and the actual image, and minimizing the expected difference between the squared distance between a random image with the same statistics as the set and a random training image. Both these criteria lead to that the optimal basis is the one comprised of the eigenvectors of the sample covariance matrix of the set.\\
+The eigenvectors are computed using SVD, where the vectors of interest are the left singular vectors.
+\subsection{Choosing the Number of Eignvectors to Use}
+The purpose of these computations is to be able to recognize the orientation of an object without retaining all the data from the training set, i.e, constructing a manifold using the most dominant eigenvectors and using that as the compass that tells us the orientation of the test image.\\
+To have a better idea about how many vectors to use, we can look at our singular values; the higher the magnitude of the singular value, the more information it retains about the set of which it came from.\\
+We can judge by examining a plot of each singular value devided by the summation of all singular values, as this tells us it's relative weight in the set. For the \texttt{Boat64}, \texttt{Cabinet64}, and \texttt{Cup64} training sets, those plots are illustrated in Figures \ref{fig:singularContribBoat64}, \ref{fig:singularContribCabinet64}, and \ref{fig:singularContribCup64}
+%\begin{minipage}[c]{0.5\textwidth}
+\begin{figure}
+\includegraphics[width = 0.45\textwidth]{singularContribBoat64.png}
+\caption{Singular contributions for \texttt{Boat64} set of training images}
+\label{fig:singularContribBoat64}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width = 0.45\textwidth]{singularContribCabinet64.png}
+\caption{Singular contributions for \texttt{Cabinet64} set of training images}
+\label{fig:singularContribCabinet64}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width = 0.45\textwidth]{singularContribCup64.png}
+\caption{Singular contributions for \texttt{Cup64} set of training images}
+\label{fig:singularContribCup64}
+\end{figure}
+Once the slope starts to become horizontal, singular values are no longer significantly contributing to making the restored information distinct, and thus can be safely dropped while still preserving most of the information.\\
+While this metric is intuitive and easy to understand, a better one to choose is the energy recovery ratio. The energy recovery ratio is a metric that expresses what percentage of the energy is restored using $k$ singular values. The energy recovery ratio is calculated using the following formula:
+\begin{equation}
+\rho(X,u_{k}) = \frac{\sum_{i=1}^{i=k} ||u_{i}^{T}*X||_{F}^{2}}{||X||_{F}^2}
+\end{equation}
+where $X$ is the collection of unbiased images and $u_i$ is the $i_{th}$ singular/eigenvector. This metric was used for all results displayed in this paper.
+To see how the metric is used, we can plot the energy recovery function for the a few sets and examine those functions.
+\begin{figure}
+\includegraphics[width = 0.45\textwidth]{erBoat.png}
+\caption{$\rho(X,u_{k})s$ for \texttt{Boat64}}
+\label{fig:erBoat}
+\end{figure}
+\begin{figure}
+\includegraphics[width = 0.45\textwidth]{erCabinet.png}
+\caption{$\rho(X,u_{k})s$ for \texttt{Cabinet64}}
+\label{fig:erCabinet}
+\end{figure}
+\begin{figure}
+\includegraphics[width = 0.45\textwidth]{erCup.png}
+\caption{$\rho(X,u_{k})s$ for \texttt{Cup64}}
+\label{fig:erCup}
+\end{figure}
+These function can be helpful in telling us the number of eigenimages needed to adequately represent the set. The tolerance used in this paper is $\mu = 90\%$.\\
+As part of the project, a test run was done on all the image sets to examine the number of eigenimages required to recover 80, 90, and 95\% of the energy of the set. The results are shown in Table \ref{table:kforMu}
+\begin{table}
+\caption{Table showing number of eigenimages needed to recover 80,90, and 95\% of the energy after reconstructing}
+\begin{tabular}{ c | c } 
+\hline
+Image Set Name & $k$ for 80,90, and 95\% ER\\
+\hline 
+ImagedataBoat64.mat &[11,18,27]\\
+ImagedataCabinet64.mat&[7,12,20]\\
+ImagedataCar64.mat&[6,14,28]\\
+ImagedataChair64.mat&[7,15,26]\\
+ImagedataCup64.mat&[7,11,17]\\
+ImagedataFlashlight64.mat	&[7,14,23]\\
+ImagedataHandle64.mat&[6,9,15]\\
+ImagedataHoseReel64.mat&[15,25,36]\\
+ImagedataKeyboard64.mat&[18,28,41]\\
+ImagedataLED64.mat&[3,5,7]\\
+ImagedataLight164.mat	&[10,19,30]\\
+ImagedataLight264.mat	&[11,19,32]\\
+ImagedataMug64.mat&[5,9,14]\\
+ImagedataScooter64.mat&[12,22,34]\\
+ImagedataSprayBottle64.mat&[8,13,19]\\
+ImagedataStapler64.mat&[6,13,25]\\
+ImagedataTrash64.mat&[7,14,25]\\
+Imagedataibook0164.mat&[10,20,35]\\
+Imagedataimac0464.mat	&[11,18,27]\\
+Imagedataimac9864.mat	&[14,24,37]\\
+\hline
+\end{tabular}
+\label{table:kforMu}
+\end{table}
+\subsection{Computing the Manifolds}
+After deciding the number of eigenvectors required to accurately represent the set, we are to compute the n-dimensional manifold that represents a set. The manifold is the projection of the training images on the eigenspace, i.e, the representation of the image as a point in the new eigenspace. The new point representing each image can be computed by:
+\begin{equation}
+p = f_{t}^{T}\phi_{j}, j=1...n
+\end{equation}
+Where:
+\begin{enumerate}
+\item $f_t^{T}$ is the transpose of the $t^{th}$ image in the set
+\item $\phi_{j}$ is the $j^{th}$ eigenvector
+\item $n$ is the number of eigen/singular vectors used.
+\end{enumerate}
+To illustrate what the manifolds look like and what they mean, we can choose to use three eigenvectors, and thus, this will give us a three dimensional manifold. Because the angle of rotation is only varying by moving along a latitude line, the manifold will be a line in three dimensions. Three dimensional manifolds might not be very useful in recovering information, as the first three singular vectors may not contribute enough of the total energy. Three 3-dimensional manifolds are shown in Figures \ref{fig:manifoldBoat}, \ref{fig:manifoldCabinet}, and \ref{fig:manifoldCup}.
+\begin{figure}
+\includegraphics[width = 0.45\textwidth]{boatManifold.png}
+\caption{Three dimensional manifold for the \texttt{Boat64} set of training images}
+\label{fig:manifoldBoat}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width = 0.45\textwidth]{cabinetManifold.png}
+\caption{Three dimensional manifold for the \texttt{Cabinet64} set of training images}
+\label{fig:manifoldCabinet}
+\end{figure}
+
+
+\begin{figure}
+\includegraphics[width = 0.45\textwidth]{cupManifold.png}
+\caption{Three dimensional manifold for the \texttt{Cup64} set of training images}
+\label{fig:manifoldCup}
+\end{figure}
+Examining the 3-dimensional manifolds shows that while points in the subspace seem to show good separation in the \texttt{Boat64} set of images, the \texttt{Cabinet64} image set has a 3-dimensional manifold that looks like two identical curves slightly translated, which means that if the image of the object was lowered to three dimensions, it looks very similar from all sides, making distinguishing orientation a difficult task if done in three dimensions.
+\subsection{Global Manifolds and Subspaces}
+The global manifold was computed two different sets of singular values:
+\begin{enumerate}
+\item Computing the singular vectors of all the eigenspaces concatenated
+\item Computing the eigenvectors of the sample correlation matrix of all the image sets concatenated
+\end{enumerate}
+The two methods were done for comparison, and the following was the conclusion:
+Using the local eigenspaces to compute a global one requires 151 singular values to achieve 90\% of the energy. So the appropriate number of eigenvectors is slightly large to store.\\
+Using all the training images from all the training sets to compute a global manifold and subspace is computationally expensive; the number of images to be processed is considerably large. However, the number of eigenvectors needed to recover 90\% of the energy is 35. This means that for a live task of identifying objects, the second approach can be faster and more practical as the dimension of the subspace is $35 < 151$, which results in a considerable saving in computation time.
+\subsection{Eigenimage Gallery}
+In this section, a collection of eigenimages are shown from the control sets used to display the results, and from the global space computed using a concatenation of all the provided training images.
+\begin{figure}
+\includegraphics[width= 0.45\textwidth]{boatEigen.png}
+\caption{Eigenimages for the \texttt{Boat64} training set}
+\label{fig:eigenBoat}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width= 0.45\textwidth]{cabinetEigen.png}
+\caption{Eigenimages for the \texttt{Cabinet64} training set}
+\label{fig:eigenCabinet}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width= 0.45\textwidth]{cupEigen.png}
+\caption{Eigenimages for the \texttt{Cup64} training set}
+\label{fig:eigenCup}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width= 0.45\textwidth]{combinedEigen.png}
+\caption{Eigenimages for the combination of all training set (related to recognition before orientation detection)}
+\label{fig:eigenCombined}
+\end{figure}
+\section{Matching Test Images to the Training Set}
+To match test images to the training set, a GUI was developed where the user clicks a browse button, navigates to the test images, and the matching is done on the global manifold first. Depending on where the match happens in the global manifold, a local manifold is chosen, and then the object is matched in that manifold. Figure \ref{fig:guiDemo} shows an example result.
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{guiDemo.png}
+\caption{GUI for matching objects}
+\label{fig:guiDemo}
+\end{figure}
+\section{Using Fourier Techniques to Estimate Eigenimages}
+As developed in \cite{Chang}, both the energy recovery ratio and the singular vectors/singular basis can be computed in the Fourier space with a significantly smaller computational expense. The approach exploits the circulant nature of the data taken under a controlled environment and proves that using DFT matrices, an energy recovery ratio for a circulant set can be computed and will always satisfy the actual energy recovery ratio computed using the data from the $SVD$.\\
+The algorithm on page 8 of \cite{Chang} has been implemented in order to estimate the eigenimages, the following results show both the estimates and the actual eigenimages computed for the project.
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{boatApprox.png}
+\caption{Actual (top) and estimate (bottom) eigenimages for the boat set}
+\label{fig:boatApprox}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{cabinetApprox.png}
+\caption{Actual (top) and estimate (bottom) eigenimages for the cabinet set}
+\label{fig:cabinetApprox}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=0.45\textwidth]{carApprox.png}
+\caption{Actual (top) and estimate (bottom) eigenimages for the car set}
+\label{fig:carApprox}
+\end{figure}
+The main reason the eigenimages deviate after some rotation is because the rotation is not in two dimensions, rotations of 3d objects from the views we are testing with result in a response dominated by a harmonic, but purely sinusoidal.
+%\end{minipage}
+{\small
+\bibliographystyle{ieee}
+\bibliography{egbib}
+}
+
+\end{document}
